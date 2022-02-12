@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
             textBackPaint.setAntiAlias(true);
             textBackPaint.setTextAlign(Paint.Align.CENTER);
             textBackPaint.setTextSize(getResources().getDimension(R.dimen.text_size));
-            this.hours=hours;
+            this.hours=hours+3;
             this.minutes=minutes;
             this.seconds=seconds;
             this.weekday=weekday;
@@ -83,39 +83,14 @@ public class MainActivity extends AppCompatActivity {
             float centerX=width/2f;
             float centerY=height/2f;
             int cur_hour= hours;
-//            int cur_minutes=minutes;
-//            int cur_secinds=seconds;
             if(cur_hour>23){
                 cur_hour=0;
             }
             String text=String.format("%02d:%02d:%02d",cur_hour,minutes,seconds);
-            String day_of_week="";
-            switch (weekday){
-                case (1):
-                    day_of_week="ПОН";
-                    break;
-                case (2):
-                    day_of_week="ВТ";
-                    break;
-                case (3):
-                    day_of_week="СР";
-                    break;
-                case (4):
-                    day_of_week="ЧТ";
-                    break;
-                case (5):
-                    day_of_week="ПТ";
-                    break;
-                case (6):
-                    day_of_week="СБ";
-                    break;
-                case (7):
-                    day_of_week="ВС";
-                    break;
-            }
-            String text2=String.format("DATE: %s %d",day_of_week,date);
-            String batteryLevel = "BATTERY: "+(int) battery+ "%";
-            //canvas.drawText("00 00 00",centerX,centerY,textPaint);
+            String[] day_of_week={"ПОН","ВТ","СР","ЧТ","ПТ","СБ","ВС"};
+            String text2=String.format("ДАТА: %s %d",day_of_week[weekday],date);
+            String batteryLevel = "БАТАРЕЯ: "+(int) battery+ "%";
+            canvas.drawColor(Color.BLACK);
             textPaint.setColor(color1);
             textPaint.setTextSize(getResources().getDimension(R.dimen.text_size));
             canvas.drawText(text,centerX,centerY,textPaint);
