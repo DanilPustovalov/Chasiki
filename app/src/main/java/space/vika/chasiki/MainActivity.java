@@ -10,28 +10,42 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.format.Time;
 import android.view.View;
+import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
     Time time;
     Handler handler;
     Runnable r;
+    Sensor light;
+    SensorManager sensorManager;
+    SensorEventListener sensorEventListener;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         time=new Time();
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        light = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+        sensorManager.registerListener(sensorEventListener, light, sensorManager.SENSOR_DELAY_NORMAL);
+
+
         r=new Runnable() {
             @Override
             public void run() {
                 time.setToNow();
                 DrawingView dv = new DrawingView(MainActivity.this,
                         time.hour,time.minute,time.second,time.weekDay,time.monthDay,getBatteryLevel()
-                        );
+                );
                 setContentView(dv);
                 handler.postDelayed(r,1000);
             }
@@ -73,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
             this.weekday=weekday;
             this.date=date;
             this.battery=battery;
+
         }
 
         @Override
@@ -86,11 +101,28 @@ public class MainActivity extends AppCompatActivity {
             if(cur_hour>23){
                 cur_hour=0;
             }
+            sensorEventListener=new SensorEventListener() {
+                @Override
+                public void onSensorChanged(SensorEvent event) {
+                    if(event.values[0]>100){
+                        canvas.drawColor(Color.WHITE);
+
+                    }else {
+                        canvas.drawColor(Color.BLACK);
+
+                    }
+                }
+
+                @Override
+                public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+                }
+            };
             String text=String.format("%02d:%02d:%02d",cur_hour,minutes,seconds);
             String[] day_of_week={"ПОН","ВТ","СР","ЧТ","ПТ","СБ","ВС"};
             String text2=String.format("ДАТА: %s %d",day_of_week[weekday],date);
             String batteryLevel = "БАТАРЕЯ: "+(int) battery+ "%";
-            canvas.drawColor(Color.BLACK);
+            //canvas.drawColor(Color.BLACK);
             textPaint.setColor(color1);
             textPaint.setTextSize(getResources().getDimension(R.dimen.text_size));
             canvas.drawText(text,centerX,centerY,textPaint);
