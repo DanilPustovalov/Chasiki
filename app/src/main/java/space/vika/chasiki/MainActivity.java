@@ -2,10 +2,13 @@ package space.vika.chasiki;
 
 import androidx.annotation.ColorInt;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -14,23 +17,33 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.MediaStore;
 import android.text.format.Time;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity {
+import java.io.File;
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     Time time;
     Handler handler;
     Runnable r;
+
     Sensor light;
     SensorManager sensorManager;
-    SensorEventListener sensorEventListener;
 
+    Button button;
+    ConstraintLayout layout;
     int hours,minutes,seconds,weekday, date;
     float battery;
+
     @ColorInt int color= Color.parseColor("#DDDDDD");
     @ColorInt int color1= Color.parseColor("#707070");
 
@@ -41,11 +54,37 @@ public class MainActivity extends AppCompatActivity {
         time=new Time();
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         light = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-        sensorManager.registerListener(sensorEventListener, light, sensorManager.SENSOR_DELAY_NORMAL);
+        SensorEventListener listenerLight = new SensorEventListener() {
+            TextView textView = findViewById(R.id.Time);
+            TextView textView2 = findViewById(R.id.Date);
+            TextView textView3 = findViewById(R.id.Battery);
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                if(event.values[0]>1000){
+                    layout.setBackgroundColor(Color.parseColor("#B6B5B5"));
+                    textView.setTextColor(Color.parseColor("#1E1E1E"));
+                    textView2.setTextColor(Color.parseColor("#1E1E1E"));
+                    textView3.setTextColor(Color.parseColor("#1E1E1E"));
+                }else {
+                    layout.setBackgroundColor(Color.parseColor("#1E1E1E"));
+                    textView.setTextColor(color);
+                    textView2.setTextColor(color);
+                    textView3.setTextColor(color);
+                }
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+            }
+        };
+        sensorManager.registerListener(listenerLight, light, sensorManager.SENSOR_DELAY_NORMAL);
 
         TextView textView = findViewById(R.id.Time);
         TextView textView2 = findViewById(R.id.Date);
         TextView textView3 = findViewById(R.id.Battery);
+        button=findViewById(R.id.Photo);
+        layout=findViewById(R.id.Main);
         r=new Runnable() {
             @Override
             public void run() {
@@ -63,13 +102,12 @@ public class MainActivity extends AppCompatActivity {
                 String text2=String.format("ДАТА: %s %d",day_of_week[weekday],date);
                 String batteryLevel = "БАТАРЕЯ: "+(int) battery+ "%";
 
-                textView.setTextColor(color);
                 textView.setTextSize(36);
                 textView.setText(text);
-                textView2.setTextColor(color);
+
                 textView2.setTextSize(24);
                 textView2.setText(text2);
-                textView3.setTextColor(color);
+
                 textView3.setTextSize(24);
                 textView3.setText(batteryLevel);
                 handler.postDelayed(r,1000);
@@ -77,6 +115,15 @@ public class MainActivity extends AppCompatActivity {
         };
         handler= new Handler();
         handler.postDelayed(r,1000);
+        button.setOnClickListener(this);
+        Button toreg=findViewById(R.id.ToReg);
+        toreg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent=new Intent(getApplicationContext(),RegActivity.class);
+                startActivity(intent);
+            }
+        });
     }
     public float getBatteryLevel(){
         Intent batteryIntent=registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
@@ -88,4 +135,12 @@ public class MainActivity extends AppCompatActivity {
         return ((float) level/(float) scale)* 100.0f;
     }
 
+    @Override
+    public void onClick(View v) {
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_CAMERA_BUTTON);
+        intent.putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(KeyEvent.ACTION_DOWN,
+                KeyEvent.KEYCODE_CAMERA));
+        sendOrderedBroadcast(intent, null);
+    }
 }
