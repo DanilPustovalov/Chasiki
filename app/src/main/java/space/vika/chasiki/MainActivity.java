@@ -4,72 +4,81 @@ import androidx.annotation.ColorInt;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
-import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Typeface;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.MediaStore;
 import android.text.format.Time;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import java.io.File;
-
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+/**
+ * Класс главного экрана приложения.
+ * @autor Пустовалов Данил
+ */
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    /** Поле для реализации времени */
     Time time;
     Handler handler;
     Runnable r;
-
+    /** Поле для сенсеров */
     Sensor light;
     SensorManager sensorManager;
-
+    /** Поля для дизайна */
     Button button;
     ConstraintLayout layout;
-    int hours,minutes,seconds,weekday, date;
+    int hours, minutes, seconds, weekday, date;
     float battery;
+    @ColorInt
+    int color = Color.parseColor("#DDDDDD");
+    @ColorInt
+    int color1 = Color.parseColor("#707070");
 
-    @ColorInt int color= Color.parseColor("#DDDDDD");
-    @ColorInt int color1= Color.parseColor("#707070");
 
+
+    /** При создании приложения */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        time=new Time();
+        time = new Time();
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         light = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+
+
         SensorEventListener listenerLight = new SensorEventListener() {
-            TextView textView = findViewById(R.id.Time);
-            TextView textView2 = findViewById(R.id.Date);
-            TextView textView3 = findViewById(R.id.Battery);
+            TextView timeTV = findViewById(R.id.Time);
+            TextView dateTV = findViewById(R.id.Date);
+            TextView batteryTV = findViewById(R.id.Battery);
+            /** При изменении показателей сенсора */
             @Override
             public void onSensorChanged(SensorEvent event) {
-                if(event.values[0]>1000){
+                if (event.values[0] > 1000) {
                     layout.setBackgroundColor(Color.parseColor("#B6B5B5"));
-                    textView.setTextColor(Color.parseColor("#1E1E1E"));
-                    textView2.setTextColor(Color.parseColor("#1E1E1E"));
-                    textView3.setTextColor(Color.parseColor("#1E1E1E"));
-                }else {
+                    timeTV.setTextColor(Color.parseColor("#1E1E1E"));
+                    dateTV.setTextColor(Color.parseColor("#1E1E1E"));
+                    batteryTV.setTextColor(Color.parseColor("#1E1E1E"));
+
+                } else {
                     layout.setBackgroundColor(Color.parseColor("#1E1E1E"));
-                    textView.setTextColor(color);
-                    textView2.setTextColor(color);
-                    textView3.setTextColor(color);
+                    timeTV.setTextColor(color);
+                    dateTV.setTextColor(color);
+                    batteryTV.setTextColor(color);
+
                 }
             }
 
@@ -83,24 +92,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         TextView textView = findViewById(R.id.Time);
         TextView textView2 = findViewById(R.id.Date);
         TextView textView3 = findViewById(R.id.Battery);
-        button=findViewById(R.id.Photo);
-        layout=findViewById(R.id.Main);
-        r=new Runnable() {
+        button = findViewById(R.id.Photo);
+        layout = findViewById(R.id.Main);
+        r = new Runnable() {
+            /** Отрисовка */
             @Override
             public void run() {
                 time.setToNow();
 
-                hours=time.hour+3;
-                minutes=time.minute;
+                hours = time.hour + 3;
+                minutes = time.minute;
                 seconds = time.second;
                 weekday = time.weekDay;
-                date= time.monthDay;
-                battery=getBatteryLevel();
+                date = time.monthDay;
+                battery = getBatteryLevel();
 
-                String text=String.format("%02d:%02d:%02d",hours,minutes,seconds);
-                String[] day_of_week={"ПОН","ВТ","СР","ЧТ","ПТ","СБ","ВС"};
-                String text2=String.format("ДАТА: %s %d",day_of_week[weekday],date);
-                String batteryLevel = "БАТАРЕЯ: "+(int) battery+ "%";
+                String text = String.format("%02d:%02d:%02d", hours, minutes, seconds);
+                String[] day_of_week = {"ПОН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"};
+                String text2 = String.format("ДАТА: %s %d", day_of_week[weekday], date);
+                String batteryLevel = "БАТАРЕЯ: " + (int) battery + "%";
 
                 textView.setTextSize(36);
                 textView.setText(text);
@@ -110,29 +120,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 textView3.setTextSize(24);
                 textView3.setText(batteryLevel);
-                handler.postDelayed(r,1000);
+
+                handler.postDelayed(r, 1000);
             }
         };
-        handler= new Handler();
-        handler.postDelayed(r,1000);
+        handler = new Handler();
+        handler.postDelayed(r, 1000);
         button.setOnClickListener(this);
-        Button toreg=findViewById(R.id.ToReg);
+        Button toreg = findViewById(R.id.ToReg);
         toreg.setOnClickListener(new View.OnClickListener() {
+            /** При нажитии на кнопку */
             @Override
             public void onClick(View v) {
-                Intent intent=new Intent(getApplicationContext(),RegActivity.class);
+                Intent intent = new Intent(getApplicationContext(), RegActivity.class);
                 startActivity(intent);
             }
         });
     }
-    public float getBatteryLevel(){
-        Intent batteryIntent=registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-        int level=batteryIntent.getIntExtra(BatteryManager.EXTRA_LEVEL,-1);
-        int scale=batteryIntent.getIntExtra(BatteryManager.EXTRA_SCALE,-1);
-        if(level==-1 || scale==-1){
+    /**
+     * Функция получения значения поля {@link MainActivity#battery}
+     * @return возвращает показатель баттареи смартфона
+     */
+    public float getBatteryLevel() {
+        Intent batteryIntent = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        int level = batteryIntent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = batteryIntent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+        if (level == -1 || scale == -1) {
             return 50.0f;
         }
-        return ((float) level/(float) scale)* 100.0f;
+        return ((float) level / (float) scale) * 100.0f;
     }
 
     @Override
@@ -143,4 +159,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 KeyEvent.KEYCODE_CAMERA));
         sendOrderedBroadcast(intent, null);
     }
+
+
+
 }
